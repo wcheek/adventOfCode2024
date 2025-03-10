@@ -38,27 +38,46 @@ fn sort_num_array(mut arr: Vec<LocID>) -> Vec<LocID> {
 
 fn find_differences(num_arrays: [Vec<LocID>; 2]) -> u32 {
     let mut difference = 0;
-    let [array_one, array_two] = num_arrays;
-    for (ind, n1) in array_one.iter().enumerate() {
-        if n1.0 > array_two[ind].0 {
-            difference += n1.0 - array_two[ind].0;
+    let [left, right] = num_arrays;
+    for (ind, n1) in left.iter().enumerate() {
+        if n1.0 > right[ind].0 {
+            difference += n1.0 - right[ind].0;
         } else {
-            difference += array_two[ind].0 - n1.0;
+            difference += right[ind].0 - n1.0;
         }
     }
     difference
 }
 
+fn find_num_occurrences(arr: &Vec<LocID>, num_to_find: &LocID) -> u32 {
+    let mut num_occurrences = 0;
+
+    for num in arr {
+        if num == num_to_find {
+            num_occurrences += 1;
+        }
+    }
+    num_occurrences
+}
+
+fn find_similarity(num_arrays: [Vec<LocID>; 2]) -> u32 {
+    let mut similarity = 0;
+    let [left, right] = num_arrays;
+    for n1 in left.iter() {
+        let num_occurrences_for_num = find_num_occurrences(&right, n1);
+        similarity += n1.0 * num_occurrences_for_num;
+    }
+
+    similarity
+}
+
 fn main() {
     let file = open_file("input.txt").unwrap();
-
-    let [num_array_one, num_array_two] = get_num_arrays(file);
-    let sorted_num_array_one = sort_num_array(num_array_one);
-    let sorted_num_array_two = sort_num_array(num_array_two);
-    println!(
-        "{}",
-        find_differences([sorted_num_array_one, sorted_num_array_two])
-    )
+    let [left, right] = get_num_arrays(file);
+    let left = sort_num_array(left);
+    let right = sort_num_array(right);
+    // println!("{}", find_differences([left, right]))
+    println!("{}", find_similarity([left, right]))
 }
 
 #[cfg(test)]
@@ -77,22 +96,22 @@ mod tests {
     #[test]
     fn test_get_num_arrays() {
         let test_input = open_file("testInput.txt").unwrap();
-        let [num_array_one, num_array_two] = get_num_arrays(test_input);
+        let [left, right] = get_num_arrays(test_input);
 
         assert_eq!(
-            num_array_one,
+            left,
             [LocID(3), LocID(4), LocID(2), LocID(1), LocID(3), LocID(3),]
         );
         assert_eq!(
-            num_array_two,
+            right,
             [LocID(4), LocID(3), LocID(5), LocID(3), LocID(9), LocID(3),]
         )
     }
 
     #[test]
     fn test_sort_num_array() {
-        let num_array_one = Vec::from([LocID(3), LocID(4), LocID(2), LocID(1), LocID(3), LocID(3)]);
-        let sorted_array = sort_num_array(num_array_one);
+        let left = Vec::from([LocID(3), LocID(4), LocID(2), LocID(1), LocID(3), LocID(3)]);
+        let sorted_array = sort_num_array(left);
 
         assert_eq!(
             sorted_array,
@@ -101,12 +120,36 @@ mod tests {
     }
 
     #[test]
-    fn set_find_differences() {
-        let array_one = Vec::from([LocID(1), LocID(2), LocID(3), LocID(3), LocID(3), LocID(4)]);
-        let array_two = Vec::from([LocID(2), LocID(3), LocID(4), LocID(5), LocID(6), LocID(7)]);
+    fn test_find_differences() {
+        let left = Vec::from([LocID(1), LocID(2), LocID(3), LocID(3), LocID(3), LocID(4)]);
+        let right = Vec::from([LocID(2), LocID(3), LocID(4), LocID(5), LocID(6), LocID(7)]);
 
-        let differences = find_differences([array_one, array_two]);
+        let differences = find_differences([left, right]);
 
         assert_eq!(11, differences)
+    }
+
+    #[test]
+    fn test_find_num_occurrences() {
+        let arr = Vec::from([LocID(1), LocID(1), LocID(2), LocID(1), LocID(6), LocID(6)]);
+
+        let num_occurrences = find_num_occurrences(&arr, &LocID(1));
+        assert_eq!(3, num_occurrences);
+
+        let num_occurrences = find_num_occurrences(&arr, &LocID(2));
+        assert_eq!(1, num_occurrences);
+
+        let num_occurrences = find_num_occurrences(&arr, &LocID(6));
+        assert_eq!(2, num_occurrences);
+    }
+
+    #[test]
+    fn test_find_similarities() {
+        let left = Vec::from([LocID(1), LocID(2), LocID(3), LocID(3), LocID(3), LocID(4)]);
+        let right = Vec::from([LocID(1), LocID(1), LocID(2), LocID(3), LocID(6), LocID(7)]);
+
+        let similarity = find_similarity([left, right]);
+
+        assert_eq!(2 + 2 + 3 + 3 + 3, similarity)
     }
 }
